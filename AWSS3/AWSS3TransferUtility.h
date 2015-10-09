@@ -254,6 +254,27 @@ handleEventsForBackgroundURLSession:(NSString *)identifier
        completionHander:(nullable AWSS3TransferUtilityUploadCompletionHandlerBlock)completionHandler;
 
 /**
+ Uploads the file to the specified Amazon S3 bucket.
+ 
+ @param fileURL           The file URL of the file to upload.
+ @param bucket            The Amazon S3 bucket name.
+ @param key               The Amazon S3 object key name.
+ @param contentType       `Content-Type` of the file.
+ @param presignedURL      The presigned URL to use.
+ @param expression        The container object to configure the upload request.
+ @param completionHandler The completion hanlder when the upload completes.
+ 
+ @return Returns an instance of `AWSTask`. On successful initialization, `task.result` contains an instance of `AWSS3TransferUtilityUploadTask`.
+ */
+- (AWSTask *)uploadFile:(NSURL *)fileURL
+                 bucket:(NSString *)bucket
+                    key:(NSString *)key
+            contentType:(NSString *)contentType
+           presignedURL:(nullable NSURL *)presignedURL
+             expression:(AWSS3TransferUtilityUploadExpression *)expression
+       completionHander:(AWSS3TransferUtilityUploadCompletionHandlerBlock)completionHandler;
+
+/**
  Downloads the specified Amazon S3 object as `NSData`.
 
  @param bucket            The Amazon S3 bucket name.

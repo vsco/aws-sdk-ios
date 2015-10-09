@@ -220,18 +220,35 @@ static AWSS3TransferUtility *_defaultS3TransferUtility = nil;
                     key:(NSString *)key
             contentType:(NSString *)contentType
              expression:(AWSS3TransferUtilityUploadExpression *)expression
+       completionHander:(AWSS3TransferUtilityUploadCompletionHandlerBlock)completionHandler
+{
+    return [self uploadFile:fileURL
+                     bucket:bucket
+                        key:key
+                contentType:contentType
+               presignedURL:nil
+                 expression:expression
+           completionHander:completionHandler];
+}
+
+- (AWSTask *)uploadFile:(NSURL *)fileURL
+                 bucket:(NSString *)bucket
+                    key:(NSString *)key
+            contentType:(NSString *)contentType
+           presignedURL:(NSURL *)presignedURL
+             expression:(AWSS3TransferUtilityUploadExpression *)expression
        completionHander:(AWSS3TransferUtilityUploadCompletionHandlerBlock)completionHandler {
     if (!expression) {
         expression = [AWSS3TransferUtilityUploadExpression new];
     }
-
+    
     AWSS3TransferUtilityUploadTask *transferUtilityTask = [AWSS3TransferUtilityUploadTask new];
     transferUtilityTask.bucket = bucket;
     transferUtilityTask.key = key;
-
+    
     expression.completionHandler = completionHandler;
     transferUtilityTask.expression = expression;
-
+    
     AWSS3GetPreSignedURLRequest *getPreSignedURLRequest = [AWSS3GetPreSignedURLRequest new];
     getPreSignedURLRequest.bucket = bucket;
     getPreSignedURLRequest.key = key;
@@ -240,33 +257,41 @@ static AWSS3TransferUtility *_defaultS3TransferUtility = nil;
     getPreSignedURLRequest.minimumCredentialsExpirationInterval = AWSS3TransferUtilityTimeoutIntervalForResource;
     getPreSignedURLRequest.contentType = contentType;
     getPreSignedURLRequest.contentMD5 = expression.contentMD5;
-
+    
     [expression assignRequestParameters:getPreSignedURLRequest];
-
+    
     __weak AWSS3TransferUtility *weakSelf = self;
-    return [[self.preSignedURLBuilder getPreSignedURL:getPreSignedURLRequest] continueWithSuccessBlock:^id(AWSTask *task) {
-        NSURL *presignedURL = task.result;
-
+    AWSTask * (^uploadWithPresignedURLBlock)(NSURL *presignedURL) = ^AWSTask *(NSURL *presignedURL){
         NSMutableURLRequest *request = [NSMutableURLRequest requestWithURL:presignedURL];
         request.cachePolicy = NSURLRequestReloadIgnoringLocalCacheData;
         request.HTTPMethod = @"PUT";
-
+        
         [request setValue:[NSString aws_baseUserAgent] forHTTPHeaderField:@"User-Agent"];
         [request setValue:contentType forHTTPHeaderField:@"Content-Type"];
-
+        
         if ([getPreSignedURLRequest.contentMD5 length] > 0) {
             [request setValue:getPreSignedURLRequest.contentMD5 forHTTPHeaderField:@"Content-MD5"];
         }
-
+        
         NSURLSessionUploadTask *uploadTask = [weakSelf.session uploadTaskWithRequest:request
                                                                             fromFile:fileURL];
         [uploadTask resume];
-
+        
         transferUtilityTask.sessionTask = uploadTask;
         [weakSelf.taskDictionary setObject:transferUtilityTask
                                     forKey:@(transferUtilityTask.taskIdentifier)];
         return [AWSTask taskWithResult:transferUtilityTask];
-    }];
+    };
+    
+    if (presignedURL) {
+        return uploadWithPresignedURLBlock(presignedURL);
+    }
+    else {
+        return [[self.preSignedURLBuilder getPreSignedURL:getPreSignedURLRequest] continueWithSuccessBlock:^id(AWSTask *task) {
+            NSURL *presignedURL = task.result;
+            return uploadWithPresignedURLBlock(presignedURL);
+        }];
+    }
 }
 
 #pragma mark - Download methods
