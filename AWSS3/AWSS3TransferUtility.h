@@ -271,8 +271,8 @@ handleEventsForBackgroundURLSession:(NSString *)identifier
                     key:(NSString *)key
             contentType:(NSString *)contentType
            presignedURL:(nullable NSURL *)presignedURL
-             expression:(AWSS3TransferUtilityUploadExpression *)expression
-       completionHander:(AWSS3TransferUtilityUploadCompletionHandlerBlock)completionHandler;
+             expression:(nullable AWSS3TransferUtilityUploadExpression *)expression
+       completionHander:(nullable AWSS3TransferUtilityUploadCompletionHandlerBlock)completionHandler;
 
 /**
  Downloads the specified Amazon S3 object as `NSData`.
