@@ -1,20 +1,20 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import "AWSMobileAnalyticsSerializerFactory.h"
-#import "AWSLogging.h"
+#import "AWSCocoaLumberjack.h"
 
 @interface AWSDefaultSerializer : NSObject<AWSMobileAnalyticsSerializer>
 - (NSData *) writeObject:(id) theObject;
@@ -27,7 +27,7 @@
 
 - (NSData *) writeObject:(id) theObject
 {
-    AWSLogWarn( @"Using the DefaultSerializer, only serializing the object's description to NSData");
+    AWSDDLogWarn( @"Using the DefaultSerializer, only serializing the object's description to NSData");
     if(theObject == nil)
         return nil;
     
@@ -36,7 +36,7 @@
 
 - (NSData *) writeArray:(NSArray *) theArray
 {
-    AWSLogWarn( @"Using the DefaultSerializer, only serializing the array's description to NSData");
+    AWSDDLogWarn( @"Using the DefaultSerializer, only serializing the array's description to NSData");
     if(theArray == nil)
         return nil;
     
@@ -45,12 +45,12 @@
 
 - (void) readObject:(NSData *) theData
 {
-    AWSLogWarn( @"Using the DefaultSerializer, do not know how to handle the data. Doing nothing");
+    AWSDDLogWarn( @"Using the DefaultSerializer, do not know how to handle the data. Doing nothing");
 }
 
 - (NSArray *) readArray:(NSData *) theData
 {
-    AWSLogWarn( @"Using the DefaultSerializer, do not know how to handle the data. Doing nothing");
+    AWSDDLogWarn( @"Using the DefaultSerializer, do not know how to handle the data. Doing nothing");
     return nil;
 }
 

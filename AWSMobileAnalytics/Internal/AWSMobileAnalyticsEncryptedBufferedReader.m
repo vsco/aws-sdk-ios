@@ -1,17 +1,17 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import <Foundation/Foundation.h>
 #import <objc/runtime.h>
@@ -20,7 +20,7 @@
 #import "AWSGZIP.h"
 #import "AWSMobileAnalyticsEncryptedBufferedReader.h"
 #import "AWSMobileAnalyticsBufferedReader.h"
-#import "AWSLogging.h"
+#import "AWSCocoaLumberjack.h"
 
 @interface AWSMobileAnalyticsCrypto : NSObject
 
@@ -160,7 +160,7 @@
         // Pull off checksum at end to validate with unobfuscated data later
         NSInteger sha1StartIndex = [decodedData length] - CC_SHA1_DIGEST_LENGTH;
         if (sha1StartIndex < 0) {
-            AWSLogError(@"Checksum length is negative" );
+            AWSDDLogError(@"Checksum length is negative" );
         } else {
             unsigned char expectedDigest[CC_SHA1_DIGEST_LENGTH];
             [decodedData getBytes:expectedDigest
@@ -172,7 +172,7 @@
 
             // Decompressing data
             NSData *originalData = [decryptedData awsgzip_gunzippedData];
-            AWSLogVerbose(@"Decompressed data from %lu bytes to %lu bytes successfully", (unsigned long)[decryptedData length], (unsigned long)[originalData length]);
+            AWSDDLogVerbose(@"Decompressed data from %lu bytes to %lu bytes successfully", (unsigned long)[decryptedData length], (unsigned long)[originalData length]);
 
             // Getting checksum from deobfuscated data and checking to see it matches
             unsigned char realDigest[CC_SHA1_DIGEST_LENGTH];
@@ -180,7 +180,7 @@
             // SHA-1 Can only support 32 bit numbers, must explicitly cast length because 64 bit NSUInteger may be larger than 4 bytes
             if(!CC_SHA1([originalData bytes], (CC_LONG)[originalData length], realDigest) ||
                memcmp(expectedDigest, realDigest, CC_SHA1_DIGEST_LENGTH)) {
-                AWSLogError(@"Checksum of digest and decrypted data does not match");
+                AWSDDLogError(@"Checksum of digest and decrypted data does not match");
             } else {
                 decryptedString = [[NSString alloc] initWithData:originalData
                                                         encoding:NSUTF8StringEncoding];

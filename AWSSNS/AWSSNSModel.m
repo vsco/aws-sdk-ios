@@ -1,20 +1,20 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import "AWSSNSModel.h"
-#import "AWSCategory.h"
+#import <AWSCore/AWSCategory.h>
 
 NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 
@@ -26,6 +26,26 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
              @"actionName" : @"ActionName",
              @"label" : @"Label",
              @"topicArn" : @"TopicArn",
+             };
+}
+
+@end
+
+@implementation AWSSNSCheckIfPhoneNumberIsOptedOutInput
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"phoneNumber" : @"phoneNumber",
+             };
+}
+
+@end
+
+@implementation AWSSNSCheckIfPhoneNumberIsOptedOutResponse
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"isOptedOut" : @"isOptedOut",
              };
 }
 
@@ -199,6 +219,26 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 
 @end
 
+@implementation AWSSNSGetSMSAttributesInput
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"attributes" : @"attributes",
+             };
+}
+
+@end
+
+@implementation AWSSNSGetSMSAttributesResponse
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"attributes" : @"attributes",
+             };
+}
+
+@end
+
 @implementation AWSSNSGetSubscriptionAttributesInput
 
 + (NSDictionary *)JSONKeyPathsByPropertyKey {
@@ -260,7 +300,28 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 }
 
 + (NSValueTransformer *)endpointsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSEndpoint class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSEndpoint class]];
+}
+
+@end
+
+@implementation AWSSNSListPhoneNumbersOptedOutInput
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"nextToken" : @"nextToken",
+             };
+}
+
+@end
+
+@implementation AWSSNSListPhoneNumbersOptedOutResponse
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"nextToken" : @"nextToken",
+             @"phoneNumbers" : @"phoneNumbers",
+             };
 }
 
 @end
@@ -285,7 +346,7 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 }
 
 + (NSValueTransformer *)platformApplicationsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSPlatformApplication class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSPlatformApplication class]];
 }
 
 @end
@@ -311,7 +372,7 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 }
 
 + (NSValueTransformer *)subscriptionsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSSubscription class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSSubscription class]];
 }
 
 @end
@@ -336,7 +397,7 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 }
 
 + (NSValueTransformer *)subscriptionsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSSubscription class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSSubscription class]];
 }
 
 @end
@@ -361,7 +422,7 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 }
 
 + (NSValueTransformer *)topicsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSTopic class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSNSTopic class]];
 }
 
 @end
@@ -375,6 +436,20 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
              @"stringValue" : @"StringValue",
              };
 }
+
+@end
+
+@implementation AWSSNSOptInPhoneNumberInput
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"phoneNumber" : @"phoneNumber",
+             };
+}
+
+@end
+
+@implementation AWSSNSOptInPhoneNumberResponse
 
 @end
 
@@ -396,6 +471,7 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
              @"message" : @"Message",
              @"messageAttributes" : @"MessageAttributes",
              @"messageStructure" : @"MessageStructure",
+             @"phoneNumber" : @"PhoneNumber",
              @"subject" : @"Subject",
              @"targetArn" : @"TargetArn",
              @"topicArn" : @"TopicArn",
@@ -403,11 +479,11 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
 }
 
 + (NSValueTransformer *)messageAttributesJSONTransformer {
-	return [AWSMTLValueTransformer reversibleTransformerWithForwardBlock:^id(id JSONDictionary) {
-		return [AWSModelUtility mapMTLDictionaryFromJSONDictionary:JSONDictionary withModelClass:[AWSSNSMessageAttributeValue class]];
-	} reverseBlock:^id(id mapMTLDictionary) {
-		return [AWSModelUtility JSONDictionaryFromMapMTLDictionary:mapMTLDictionary];
-	}];
+    return [AWSMTLValueTransformer reversibleTransformerWithForwardBlock:^id(id JSONDictionary) {
+        return [AWSModelUtility mapMTLDictionaryFromJSONDictionary:JSONDictionary withModelClass:[AWSSNSMessageAttributeValue class]];
+    } reverseBlock:^id(id mapMTLDictionary) {
+        return [AWSModelUtility JSONDictionaryFromMapMTLDictionary:mapMTLDictionary];
+    }];
 }
 
 @end
@@ -452,6 +528,20 @@ NSString *const AWSSNSErrorDomain = @"com.amazonaws.AWSSNSErrorDomain";
              @"platformApplicationArn" : @"PlatformApplicationArn",
              };
 }
+
+@end
+
+@implementation AWSSNSSetSMSAttributesInput
+
++ (NSDictionary *)JSONKeyPathsByPropertyKey {
+	return @{
+             @"attributes" : @"attributes",
+             };
+}
+
+@end
+
+@implementation AWSSNSSetSMSAttributesResponse
 
 @end
 

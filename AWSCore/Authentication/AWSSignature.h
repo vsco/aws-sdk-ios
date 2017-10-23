@@ -1,17 +1,17 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import <Foundation/Foundation.h>
 #import "AWSNetworking.h"
@@ -37,11 +37,17 @@ FOUNDATION_EXPORT NSString *const AWSSignatureV4Terminator;
 
 @property (nonatomic, strong, readonly) id<AWSCredentialsProvider> credentialsProvider;
 
-+ (instancetype)signerWithCredentialsProvider:(id<AWSCredentialsProvider>)credentialsProvider
-                                     endpoint:(AWSEndpoint *)endpoint;
-
 - (instancetype)initWithCredentialsProvider:(id<AWSCredentialsProvider>)credentialsProvider
                                    endpoint:(AWSEndpoint *)endpoint;
+
++ (AWSTask<NSURL *> *)generateQueryStringForSignatureV4WithCredentialProvider:(id<AWSCredentialsProvider>)credentialsProvider
+                                                                   httpMethod:(AWSHTTPMethod)httpMethod
+                                                               expireDuration:(int32_t)expireDuration
+                                                                     endpoint:(AWSEndpoint *)endpoint
+                                                                      keyPath:(NSString *)keyPath
+                                                               requestHeaders:(NSDictionary<NSString *, NSString *> *)requestHeaders
+                                                            requestParameters:(NSDictionary<NSString *, id> *)requestParameters
+                                                                     signBody:(BOOL)signBody;
 
 + (NSString *)getCanonicalizedRequest:(NSString *)method
                                  path:(NSString *)path

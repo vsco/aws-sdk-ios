@@ -1,31 +1,35 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import "AWSS3TransferManager.h"
 #import "AWSS3.h"
 #import "AWSBolts.h"
 #import "AWSTMCache.h"
 #import "AWSCategory.h"
-#import "AWSLogging.h"
+#import "AWSCocoaLumberjack.h"
 #import "AWSSynchronizedMutableDictionary.h"
 
+static NSString *const AWSInfoS3TransferManager = @"S3TransferManager";
+
+// Private constants
 NSUInteger const AWSS3TransferManagerMinimumPartSize = 5 * 1024 * 1024; // 5MB
 NSString *const AWSS3TransferManagerCacheName = @"com.amazonaws.AWSS3TransferManager.CacheName";
 NSString *const AWSS3TransferManagerErrorDomain = @"com.amazonaws.AWSS3TransferManagerErrorDomain";
 NSUInteger const AWSS3TransferManagerByteLimitDefault = 5 * 1024 * 1024; // 5MB
 NSTimeInterval const AWSS3TransferManagerAgeLimitDefault = 0.0; // Keeps the data indefinitely unless it hits the size limit.
+NSString *const AWSS3TransferManagerUserAgentPrefix = @"transfer-manager";
 
 @interface AWSS3TransferManager()
 
@@ -55,19 +59,38 @@ NSTimeInterval const AWSS3TransferManagerAgeLimitDefault = 0.0; // Keeps the dat
 
 @end
 
+@interface AWSS3()
+
+- (instancetype)initWithConfiguration:(AWSServiceConfiguration *)configuration;
+
+@end
+
 @implementation AWSS3TransferManager
 
 static AWSSynchronizedMutableDictionary *_serviceClients = nil;
 
 + (instancetype)defaultS3TransferManager {
-    if (![AWSServiceManager defaultServiceManager].defaultServiceConfiguration) {
-        return nil;
-    }
-
     static AWSS3TransferManager *_defaultS3TransferManager = nil;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-        _defaultS3TransferManager = [[AWSS3TransferManager alloc] initWithConfiguration:[AWSServiceManager defaultServiceManager].defaultServiceConfiguration
+        AWSServiceConfiguration *serviceConfiguration = nil;
+        AWSServiceInfo *serviceInfo = [[AWSInfo defaultAWSInfo] defaultServiceInfo:AWSInfoS3TransferManager];
+        if (serviceInfo) {
+            serviceConfiguration = [[AWSServiceConfiguration alloc] initWithRegion:serviceInfo.region
+                                                               credentialsProvider:serviceInfo.cognitoCredentialsProvider];
+        }
+
+        if (!serviceConfiguration) {
+            serviceConfiguration = [AWSServiceManager defaultServiceManager].defaultServiceConfiguration;
+        }
+
+        if (!serviceConfiguration) {
+            @throw [NSException exceptionWithName:NSInternalInconsistencyException
+                                           reason:@"The service configuration is `nil`. You need to configure `Info.plist` or set `defaultServiceConfiguration` before using this method."
+                                         userInfo:nil];
+        }
+
+        _defaultS3TransferManager = [[AWSS3TransferManager alloc] initWithConfiguration:serviceConfiguration
                                                                               cacheName:AWSS3TransferManagerCacheName];
     });
 
@@ -87,7 +110,23 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
 }
 
 + (instancetype)S3TransferManagerForKey:(NSString *)key {
-    return [_serviceClients objectForKey:key];
+    @synchronized(self) {
+        AWSS3TransferManager *serviceClient = [_serviceClients objectForKey:key];
+        if (serviceClient) {
+            return serviceClient;
+        }
+
+        AWSServiceInfo *serviceInfo = [[AWSInfo defaultAWSInfo] serviceInfo:AWSInfoS3TransferManager
+                                                                     forKey:key];
+        if (serviceInfo) {
+            AWSServiceConfiguration *serviceConfiguration = [[AWSServiceConfiguration alloc] initWithRegion:serviceInfo.region
+                                                                                        credentialsProvider:serviceInfo.cognitoCredentialsProvider];
+            [AWSS3TransferManager registerS3TransferManagerWithConfiguration:serviceConfiguration
+                                                                      forKey:key];
+        }
+
+        return [_serviceClients objectForKey:key];
+    }
 }
 
 + (void)removeS3TransferManagerForKey:(NSString *)key {
@@ -113,13 +152,12 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
 - (instancetype)initWithConfiguration:(AWSServiceConfiguration *)configuration
                             cacheName:(NSString *)cacheName {
     if (self = [super init]) {
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated-declarations"
-        _s3 = [[AWSS3 alloc] initWithConfiguration:configuration];
-#pragma clang diagnostic pop
+        AWSServiceConfiguration *_configuration = [configuration copy];
+        [_configuration addUserAgentProductToken:AWSS3TransferManagerUserAgentPrefix];
+        _s3 = [[AWSS3 alloc] initWithConfiguration:_configuration];
 
         _cache = [[AWSTMCache alloc] initWithName:cacheName
-                                      rootPath:[NSTemporaryDirectory() stringByAppendingPathComponent:AWSS3TransferManagerCacheName]];
+                                         rootPath:[NSTemporaryDirectory() stringByAppendingPathComponent:AWSS3TransferManagerCacheName]];
         _cache.diskCache.byteLimit = AWSS3TransferManagerByteLimitDefault;
         _cache.diskCache.ageLimit = AWSS3TransferManagerAgeLimitDefault;
     }
@@ -376,7 +414,7 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
                     [[NSFileManager defaultManager] removeItemAtURL:tempURL
                                                               error:&error];
                     if (error) {
-                        AWSLogError(@"Failed to delete a temporary file for part upload: [%@]", error);
+                        AWSDDLogError(@"Failed to delete a temporary file for part upload: [%@]", error);
                     }
 
                     if (task.error) {
@@ -488,7 +526,7 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
                     generatedfileName = [components componentsJoinedByString:@"."];
 
                 } else {
-                    AWSLogError(@"[generatedPath componentsSeparatedByString] returns empty array or nil, generatedfileName:%@",generatedfileName);
+                    AWSDDLogError(@"[generatedPath componentsSeparatedByString] returns empty array or nil, generatedfileName:%@",generatedfileName);
                     NSString *errorString = [NSString stringWithFormat:@"[generatedPath componentsSeparatedByString] returns empty array or nil, generatedfileName:%@",generatedfileName];
                     NSDictionary *userInfo = @{NSLocalizedDescriptionKey: NSLocalizedString(errorString, nil)};
                     return [AWSTask taskWithError:[NSError errorWithDomain:AWSS3TransferManagerErrorDomain code:AWSS3TransferManagerErrorInternalInConsistency userInfo:userInfo]];
@@ -514,14 +552,14 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
         NSURL *tempFileURL = downloadRequest.temporaryFileURL;
         if (tempFileURL) {
             if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileURL.path] == NO) {
-                AWSLogError(@"tempfile is not exist, unable to resume");
+                AWSDDLogError(@"tempfile is not exist, unable to resume");
             }
             NSError *error = nil;
             NSString *tempFilePath = tempFileURL.path;
             NSDictionary *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:[tempFilePath stringByResolvingSymlinksInPath]
                                                                                         error:&error];
             if (error) {
-                AWSLogError(@"Unable to resume download task: Failed to retrival tempFileURL. [%@]",error);
+                AWSDDLogError(@"Unable to resume download task: Failed to retrival tempFileURL. [%@]",error);
             }
             unsigned long long fileSize = [attributes fileSize];
             downloadRequest.range = [NSString stringWithFormat:@"bytes=%llu-",fileSize];
@@ -571,7 +609,7 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
         if (task.error) {
             //download got error, check if tempFile has been created.
             if ([[NSFileManager defaultManager] fileExistsAtPath:tempFileURL.path]) {
-                AWSLogDebug(@"tempFile has not been created yet.");
+                AWSDDLogDebug(@"tempFile has not been created yet.");
             }
             
             return [AWSTask taskWithError:task.error];
@@ -736,9 +774,9 @@ static AWSSynchronizedMutableDictionary *_serviceClients = nil;
 
     [[weakSelf.s3 abortMultipartUpload:abortMultipartUploadRequest] continueWithBlock:^id(AWSTask *task) {
         if (task.error) {
-            AWSLogDebug(@"Received response for abortMultipartUpload with Error:%@",task.error);
+            AWSDDLogDebug(@"Received response for abortMultipartUpload with Error:%@",task.error);
         } else {
-            AWSLogDebug(@"Received response for abortMultipartUpload.");
+            AWSDDLogDebug(@"Received response for abortMultipartUpload.");
         }
         return nil;
     }];
