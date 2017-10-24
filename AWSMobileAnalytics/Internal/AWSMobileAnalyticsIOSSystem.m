@@ -1,24 +1,24 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import <sys/xattr.h>
 #import <UIKit/UIKit.h>
-#import "AWSReachability.h"
+#import "AWSKSReachability.h"
 #import "AWSMobileAnalyticsIOSSystem.h"
 #import "AWSMobileAnalyticsIOSLifeCycleManager.h"
-#import "AWSLogging.h"
+#import "AWSCocoaLumberjack.h"
 #import "AWSCategory.h"
 #import "AWSMobileAnalyticsIOSPreferences.h"
 
@@ -51,8 +51,7 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
 
         _lifeCycleManager = [AWSMobileAnalyticsIOSLifeCycleManager manager];
 
-        AWSReachability *reachability = [AWSReachability reachabilityForInternetConnection];
-        self.connectivity = [[AWSMobileAnalyticsIOSConnectivity alloc] initWithReachability:reachability];
+        self.connectivity = [AWSMobileAnalyticsIOSConnectivity defaultConnectivity];
 
         NSFileManager *internalFileManager = [NSFileManager defaultManager];
 
@@ -69,7 +68,7 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
         {
             if(![rootDirectory mkdirs])
             {
-                AWSLogError( @"Failed to create data directory for path %@", absolutePath);
+                AWSDDLogError( @"Failed to create data directory for path %@", absolutePath);
             }
         }
         
@@ -81,7 +80,7 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
                                                                   withRootFile:rootDirectory
                                                              cachesClientIDRef:&cachesClientId];
         if ( NO == migration_result) {
-            AWSLogError(@"AMA Migration Failed");
+            AWSDDLogError(@"AMA Migration Failed");
         }
         //----------------------End Migration --------------------------------------------
 
@@ -104,7 +103,7 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
         }
         else
         {
-            AWSLogError( @"The Mobile Analytics root directory could not be created");
+            AWSDDLogError( @"The Mobile Analytics root directory could not be created");
             NSAssert([rootDirectory exists], @"The Mobile Analytics root directory could not be created");
         }
     }
@@ -158,7 +157,7 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
                                                                backupItemName:@"com.amazonaws.MobileAnalytics.backUpItem"
                                                                         error:&prefError];
     if ( NO == prefCopySucceeded) {
-        AWSLogError(@"[Migration] Failed to copy preferences file. error:%@",prefError);
+        AWSDDLogError(@"[Migration] Failed to copy preferences file. error:%@",prefError);
         
         if ( NO == [self readClientIDFromCachesDirectoryWithInsightsPrivateKey:insightsPrivateKey
                                                              cachesClientIDRef:cachesClientIDRef
@@ -180,11 +179,11 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
         //remove events in caches directory
         NSError *removeError = nil;
         if ( NO == [internalFileManager removeItemAtPath:cachesEventsPath error:&removeError]) {
-            AWSLogWarn(@"[Migration] Failed to remove cachesEventsPath. error:%@", removeError);
+            AWSDDLogWarn(@"[Migration] Failed to remove cachesEventsPath. error:%@", removeError);
         }
         
     } else {
-        AWSLogWarn(@"[Migration] Failed to copy Events directory. error:%@",eventsError);
+        AWSDDLogWarn(@"[Migration] Failed to copy Events directory. error:%@",eventsError);
     }
     
     return YES;
@@ -230,7 +229,7 @@ static NSString* const UNIQUE_ID_KEY = @"UniqueId";
                                      forKey: NSURLIsExcludedFromBackupKey
                                       error: &error];
     if(!success){
-        AWSLogError( @"Error excluding %@ from backup %@", [theUrl lastPathComponent], error);
+        AWSDDLogError( @"Error excluding %@ from backup %@", [theUrl lastPathComponent], error);
     }
     return success;
 }

@@ -1,20 +1,20 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import "AWSSimpleDBModel.h"
-#import "AWSCategory.h"
+#import <AWSCore/AWSCategory.h>
 
 NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain";
 
@@ -41,7 +41,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)itemsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBDeletableItem class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBDeletableItem class]];
 }
 
 @end
@@ -56,7 +56,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)itemsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBReplaceableItem class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBReplaceableItem class]];
 }
 
 @end
@@ -92,7 +92,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)attributesJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBDeletableAttribute class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBDeletableAttribute class]];
 }
 
 @end
@@ -109,11 +109,11 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)attributesJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBDeletableAttribute class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBDeletableAttribute class]];
 }
 
 + (NSValueTransformer *)expectedJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONDictionaryTransformerWithModelClass:[AWSSimpleDBUpdateCondition class]];
+    return [NSValueTransformer awsmtl_JSONDictionaryTransformerWithModelClass:[AWSSimpleDBUpdateCondition class]];
 }
 
 @end
@@ -176,7 +176,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)attributesJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBAttribute class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBAttribute class]];
 }
 
 @end
@@ -192,7 +192,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)attributesJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBAttribute class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBAttribute class]];
 }
 
 @end
@@ -231,11 +231,11 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)attributesJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBReplaceableAttribute class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBReplaceableAttribute class]];
 }
 
 + (NSValueTransformer *)expectedJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONDictionaryTransformerWithModelClass:[AWSSimpleDBUpdateCondition class]];
+    return [NSValueTransformer awsmtl_JSONDictionaryTransformerWithModelClass:[AWSSimpleDBUpdateCondition class]];
 }
 
 @end
@@ -262,7 +262,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)attributesJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBReplaceableAttribute class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBReplaceableAttribute class]];
 }
 
 @end
@@ -289,7 +289,7 @@ NSString *const AWSSimpleDBErrorDomain = @"com.amazonaws.AWSSimpleDBErrorDomain"
 }
 
 + (NSValueTransformer *)itemsJSONTransformer {
-	return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBItem class]];
+    return [NSValueTransformer awsmtl_JSONArrayTransformerWithModelClass:[AWSSimpleDBItem class]];
 }
 
 @end

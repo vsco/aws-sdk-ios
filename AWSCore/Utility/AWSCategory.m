@@ -1,34 +1,31 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
-
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 #import "AWSCategory.h"
 #import <objc/runtime.h>
 #import <CommonCrypto/CommonCryptor.h>
 #import <CommonCrypto/CommonDigest.h>
-#import <UIKit/UIKit.h>
-#import "AWSLogging.h"
+#import "AWSCocoaLumberjack.h"
 #import "AWSGZIP.h"
 #import "AWSMantle.h"
-
-NSString *const AWSiOSSDKVersion = @"2.2.6";
 
 NSString *const AWSDateRFC822DateFormat1 = @"EEE, dd MMM yyyy HH:mm:ss z";
 NSString *const AWSDateISO8601DateFormat1 = @"yyyy-MM-dd'T'HH:mm:ss'Z'";
 NSString *const AWSDateISO8601DateFormat2 = @"yyyyMMdd'T'HHmmss'Z'";
 NSString *const AWSDateISO8601DateFormat3 = @"yyyy-MM-dd'T'HH:mm:ss.SSS'Z'";
 NSString *const AWSDateShortDateFormat1 = @"yyyyMMdd";
+NSString *const AWSDateShortDateFormat2 = @"yyyy-MM-dd";
 
 @interface AWSCategory : NSObject
 
@@ -59,7 +56,10 @@ static NSTimeInterval _clockskew = 0.0;
 
 + (NSDate *)aws_dateFromString:(NSString *)string {
     NSDate *parsedDate = nil;
-    NSArray *arrayOfDateFormat = @[AWSDateRFC822DateFormat1,AWSDateISO8601DateFormat1,AWSDateISO8601DateFormat2,AWSDateISO8601DateFormat3];
+    NSArray *arrayOfDateFormat = @[AWSDateRFC822DateFormat1,
+                                   AWSDateISO8601DateFormat1,
+                                   AWSDateISO8601DateFormat2,
+                                   AWSDateISO8601DateFormat3];
 
     for (NSString *dateFormat in arrayOfDateFormat) {
         if (!parsedDate) {
@@ -73,6 +73,25 @@ static NSTimeInterval _clockskew = 0.0;
 }
 
 + (NSDate *)aws_dateFromString:(NSString *)string format:(NSString *)dateFormat {
+    if ([dateFormat isEqualToString:AWSDateRFC822DateFormat1]) {
+        return [[NSDate aws_RFC822Date1Formatter] dateFromString:string];
+    }
+    if ([dateFormat isEqualToString:AWSDateISO8601DateFormat1]) {
+        return [[NSDate aws_ISO8601Date1Formatter] dateFromString:string];
+    }
+    if ([dateFormat isEqualToString:AWSDateISO8601DateFormat2]) {
+        return [[NSDate aws_ISO8601Date2Formatter] dateFromString:string];
+    }
+    if ([dateFormat isEqualToString:AWSDateISO8601DateFormat3]) {
+        return [[NSDate aws_ISO8601Date3Formatter] dateFromString:string];
+    }
+    if ([dateFormat isEqualToString:AWSDateShortDateFormat1]) {
+        return [[NSDate aws_ShortDateFormat1Formatter] dateFromString:string];
+    }
+    if ([dateFormat isEqualToString:AWSDateShortDateFormat2]) {
+        return [[NSDate aws_ShortDateFormat2Formatter] dateFromString:string];
+    }
+
     NSDateFormatter *dateFormatter = [NSDateFormatter new];
     dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
     dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
@@ -82,12 +101,115 @@ static NSTimeInterval _clockskew = 0.0;
 }
 
 - (NSString *)aws_stringValue:(NSString *)dateFormat {
+    if ([dateFormat isEqualToString:AWSDateRFC822DateFormat1]) {
+        return [[NSDate aws_RFC822Date1Formatter] stringFromDate:self];
+    }
+    if ([dateFormat isEqualToString:AWSDateISO8601DateFormat1]) {
+        return [[NSDate aws_ISO8601Date1Formatter] stringFromDate:self];
+    }
+    if ([dateFormat isEqualToString:AWSDateISO8601DateFormat2]) {
+        return [[NSDate aws_ISO8601Date2Formatter] stringFromDate:self];
+    }
+    if ([dateFormat isEqualToString:AWSDateISO8601DateFormat3]) {
+        return [[NSDate aws_ISO8601Date3Formatter] stringFromDate:self];
+    }
+    if ([dateFormat isEqualToString:AWSDateShortDateFormat1]) {
+        return [[NSDate aws_ShortDateFormat1Formatter] stringFromDate:self];
+    }
+    if ([dateFormat isEqualToString:AWSDateShortDateFormat2]) {
+        return [[NSDate aws_ShortDateFormat2Formatter] stringFromDate:self];
+    }
+
     NSDateFormatter *dateFormatter = [NSDateFormatter new];
     dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
     dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
     dateFormatter.dateFormat = dateFormat;
 
     return [dateFormatter stringFromDate:self];
+}
+
++ (NSDateFormatter *)aws_RFC822Date1Formatter {
+    static NSDateFormatter *_dateFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _dateFormatter = [NSDateFormatter new];
+        _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+        _dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        _dateFormatter.dateFormat = AWSDateRFC822DateFormat1;
+    });
+
+    return _dateFormatter;
+}
+
++ (NSDateFormatter *)aws_ISO8601Date1Formatter {
+    static NSDateFormatter *_dateFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _dateFormatter = [NSDateFormatter new];
+        _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+        _dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        _dateFormatter.dateFormat = AWSDateISO8601DateFormat1;
+    });
+
+    return _dateFormatter;
+}
+
++ (NSDateFormatter *)aws_ISO8601Date2Formatter {
+    static NSDateFormatter *_dateFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _dateFormatter = [NSDateFormatter new];
+        _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+        _dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        _dateFormatter.dateFormat = AWSDateISO8601DateFormat2;
+    });
+
+    return _dateFormatter;
+}
+
++ (NSDateFormatter *)aws_ISO8601Date3Formatter {
+    static NSDateFormatter *_dateFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _dateFormatter = [NSDateFormatter new];
+        _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+        _dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        _dateFormatter.dateFormat = AWSDateISO8601DateFormat3;
+    });
+
+    return _dateFormatter;
+}
+
++ (NSDateFormatter *)aws_ShortDateFormat1Formatter {
+    static NSDateFormatter *_dateFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _dateFormatter = [NSDateFormatter new];
+        _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+        _dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        _dateFormatter.dateFormat = AWSDateShortDateFormat1;
+    });
+
+    return _dateFormatter;
+}
+
++ (NSDateFormatter *)aws_ShortDateFormat2Formatter {
+    static NSDateFormatter *_dateFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        _dateFormatter = [NSDateFormatter new];
+        _dateFormatter.timeZone = [NSTimeZone timeZoneWithName:@"GMT"];
+        _dateFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+        _dateFormatter.dateFormat = AWSDateShortDateFormat2;
+    });
+
+    return _dateFormatter;
 }
 
 + (void)aws_setRuntimeClockSkew:(NSTimeInterval)clockskew {
@@ -171,8 +293,13 @@ static NSTimeInterval _clockskew = 0.0;
 @implementation NSNumber (AWS)
 
 + (NSNumber *)aws_numberFromString:(NSString *)string {
-    NSNumberFormatter *numberFormatter = [NSNumberFormatter new];
-    numberFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    static NSNumberFormatter *numberFormatter = nil;
+
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        numberFormatter = [NSNumberFormatter new];
+        numberFormatter.locale = [NSLocale localeWithLocaleIdentifier:@"en_US_POSIX"];
+    });
 
     return [numberFormatter numberFromString:string];
 }
@@ -250,19 +377,6 @@ static NSTimeInterval _clockskew = 0.0;
     return [md5 base64EncodedStringWithOptions:kNilOptions];
 }
 
-+ (NSString *)aws_baseUserAgent {
-    static NSString *_userAgent = nil;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        NSString *systemName = [[[UIDevice currentDevice] systemName] stringByReplacingOccurrencesOfString:@" " withString:@"-"];
-        NSString *systemVersion = [[UIDevice currentDevice] systemVersion];
-        NSString *localeIdentifier = [[NSLocale currentLocale] localeIdentifier];
-        _userAgent = [NSString stringWithFormat:@"aws-sdk-iOS/%@ %@/%@ %@", AWSiOSSDKVersion, systemName, systemVersion, localeIdentifier];
-    });
-
-    return _userAgent;
-}
-
 - (BOOL)aws_isBase64Data {
     if ([self length] % 4 == 0) {
         static NSCharacterSet *invertedBase64CharacterSet = nil;
@@ -276,27 +390,36 @@ static NSTimeInterval _clockskew = 0.0;
 }
 
 - (NSString *)aws_stringWithURLEncoding {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
                                                                                  (__bridge CFStringRef)[self aws_decodeURLEncoding],
                                                                                  NULL,
                                                                                  (CFStringRef)@"!*'\();:@&=+$,/?%#[] ",
                                                                                  kCFStringEncodingUTF8));
+#pragma clang diagnostic pop
 }
 
 - (NSString *)aws_stringWithURLEncodingPath {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
                                                                                  (__bridge CFStringRef)[self aws_decodeURLEncoding],
                                                                                  NULL,
                                                                                  (CFStringRef)@"!*'\();:@&=+$,?%#[] ",
                                                                                  kCFStringEncodingUTF8));
+#pragma clang diagnostic pop
 }
 
 - (NSString *)aws_stringWithURLEncodingPathWithoutPriorDecoding {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
     return (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault,
                                                                                  (__bridge CFStringRef)self,
                                                                                  NULL,
                                                                                  (CFStringRef)@"!*'\();:@&=+$,?%#[] ",
                                                                                  kCFStringEncodingUTF8));
+#pragma clang diagnostic pop
 }
 
 - (NSString *)aws_decodeURLEncoding {
@@ -360,6 +483,92 @@ static NSTimeInterval _clockskew = 0.0;
     }
 }
 
+- (AWSRegionType)aws_regionTypeValue {
+    if ([self isEqualToString:@"AWSRegionUSEast1"]
+        || [self isEqualToString:@"USEast1"]
+        || [self isEqualToString:@"us-east-1"]) {
+        return AWSRegionUSEast1;
+    }
+    if ([self isEqualToString:@"AWSRegionUSEast2"]
+        || [self isEqualToString:@"USEast2"]
+        || [self isEqualToString:@"us-east-2"]) {
+        return AWSRegionUSEast2;
+    }
+    if ([self isEqualToString:@"AWSRegionUSWest1"]
+        || [self isEqualToString:@"USWest1"]
+        || [self isEqualToString:@"us-west-1"]) {
+        return AWSRegionUSWest1;
+    }
+    if ([self isEqualToString:@"AWSRegionUSWest2"]
+        || [self isEqualToString:@"USWest2"]
+        || [self isEqualToString:@"us-west-2"]) {
+        return AWSRegionUSWest2;
+    }
+    if ([self isEqualToString:@"AWSRegionEUWest1"]
+        || [self isEqualToString:@"EUWest1"]
+        || [self isEqualToString:@"eu-west-1"]) {
+        return AWSRegionEUWest1;
+    }
+    if ([self isEqualToString:@"AWSRegionEUWest2"]
+        || [self isEqualToString:@"EUWest2"]
+        || [self isEqualToString:@"eu-west-2"]) {
+        return AWSRegionEUWest2;
+    }
+    if ([self isEqualToString:@"AWSRegionEUCentral1"]
+        || [self isEqualToString:@"EUCentral1"]
+        || [self isEqualToString:@"eu-central-1"]) {
+        return AWSRegionEUCentral1;
+    }
+    if ([self isEqualToString:@"AWSRegionAPNortheast1"]
+        || [self isEqualToString:@"APNortheast1"]
+        || [self isEqualToString:@"ap-northeast-1"]) {
+        return AWSRegionAPNortheast1;
+    }
+    if ([self isEqualToString:@"AWSRegionAPNortheast2"]
+        || [self isEqualToString:@"APNortheast2"]
+        || [self isEqualToString:@"ap-northeast-2"]) {
+        return AWSRegionAPNortheast2;
+    }
+    if ([self isEqualToString:@"AWSRegionAPSoutheast1"]
+        || [self isEqualToString:@"APSoutheast1"]
+        || [self isEqualToString:@"ap-southeast-1"]) {
+        return AWSRegionAPSoutheast1;
+    }
+    if ([self isEqualToString:@"AWSRegionAPSoutheast2"]
+        || [self isEqualToString:@"APSoutheast2"]
+        || [self isEqualToString:@"ap-southeast-2"]) {
+        return AWSRegionAPSoutheast2;
+    }
+    if ([self isEqualToString:@"AWSRegionAPSouth1"]
+        || [self isEqualToString:@"APSouth1"]
+        || [self isEqualToString:@"ap-south-1"]) {
+        return AWSRegionAPSouth1;
+    }
+    if ([self isEqualToString:@"AWSRegionSAEast1"]
+        || [self isEqualToString:@"SAEast1"]
+        || [self isEqualToString:@"sa-east-1"]) {
+        return AWSRegionSAEast1;
+    }
+    if ([self isEqualToString:@"AWSRegionCACentral1"]
+        || [self isEqualToString:@"CACentral1"]
+        || [self isEqualToString:@"ca-central-1"]) {
+        return AWSRegionCACentral1;
+    }
+    if ([self isEqualToString:@"AWSRegionUSGovWest1"]
+        || [self isEqualToString:@"USGovWest1"]
+        || [self isEqualToString:@"us-gov-west-1"]) {
+        return AWSRegionUSGovWest1;
+    }
+
+    if ([self isEqualToString:@"AWSRegionCNNorth1"]
+        || [self isEqualToString:@"CNNorth1"]
+        || [self isEqualToString:@"cn-north-1"]) {
+        return AWSRegionCNNorth1;
+    }
+
+    return AWSRegionUnknown;
+}
+
 - (BOOL)aws_contains:(NSString *)searchString {
     NSRange range = [self rangeOfString:searchString];
 
@@ -405,12 +614,12 @@ static NSTimeInterval _clockskew = 0.0;
                                      resultingItemURL:nil error:&error];
                 if (NO == success) {
                     if (error) {
-                        AWSLogError(@"Failed to move backupItemURL directory(%@) to destinationURL(%@): %@" ,backupItemURL,destinationURL,error);
+                        AWSDDLogError(@"Failed to move backupItemURL directory(%@) to destinationURL(%@): %@" ,backupItemURL,destinationURL,error);
                     }
                     if ([self fileExistsAtPath:[destinationURL path]]) {
                         NSError *removeError = nil;
                         if (NO == [self removeItemAtURL:destinationURL error:&removeError]) {
-                            AWSLogError(@"Failed to remove destinationURL(%@): %@",destinationURL,removeError);
+                            AWSDDLogError(@"Failed to remove destinationURL(%@): %@",destinationURL,removeError);
                         }
                     }
                     
@@ -422,7 +631,7 @@ static NSTimeInterval _clockskew = 0.0;
     NSError *error;
     if (![self removeItemAtURL:tempDir error:&error])
     {
-        AWSLogError(@"Failed to remove temp(%@) directory after atomic copy: %@",tempDir,error);
+        AWSDDLogError(@"Failed to remove temp(%@) directory after atomic copy: %@",tempDir,error);
     }
     
     return result;

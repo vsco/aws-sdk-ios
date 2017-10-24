@@ -8,9 +8,20 @@
  *
  */
 
+#import "AWSCancellationToken.h"
+#import "AWSCancellationTokenRegistration.h"
+#import "AWSCancellationTokenSource.h"
 #import "AWSExecutor.h"
+#import "AWSGeneric.h"
 #import "AWSTask.h"
 #import "AWSTaskCompletionSource.h"
 
-/*! @abstract 80175001: There were multiple errors. */
-extern NSInteger const kAWSMultipleErrorsError;
+
+NS_ASSUME_NONNULL_BEGIN
+
+/**
+ A string containing the version of the Bolts Framework used by the current application.
+ */
+extern NSString *const AWSBoltsFrameworkVersionString;
+
+NS_ASSUME_NONNULL_END

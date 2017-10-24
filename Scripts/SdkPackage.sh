@@ -3,7 +3,7 @@ set -u
 
 # Helper function to exit on nonzero code
 function exitOnFailureCode() {
-    if [ $1 -ne 0 ] 
+    if [ $1 -ne 0 ]
     then
     	echo "Error occurred, abort"
         exit $1
@@ -20,6 +20,9 @@ if [ $# -eq 0 ]
 fi
 
 project_name=$1
+#set the project_path if $2 exists, if not, assign it to "."
+project_path=${2-.}
+echo "Project name: ${project_name}, Project Path: ${project_path}"
 
 # Define these to suit your nefarious purposes
 CURR_DIR=$(PWD)
@@ -45,7 +48,7 @@ fi
 xcodebuild ARCHS="armv7 armv7s arm64 i386 x86_64" \
 	ONLY_ACTIVE_ARCH=NO \
 	-configuration Debug \
-    -project "${project_name}.xcodeproj" \
+    -project "${project_path}/AWSiOSSDKv2.xcodeproj" \
     -target "${project_name}" \
     -sdk iphonesimulator \
     SYMROOT=$(PWD)/builtFramework \
@@ -56,7 +59,7 @@ exitOnFailureCode $?
 xcodebuild ARCHS="armv7 armv7s arm64 i386 x86_64" \
 	ONLY_ACTIVE_ARCH=NO \
 	-configuration Release \
-    -project "${project_name}.xcodeproj" \
+    -project "${project_path}/AWSiOSSDKv2.xcodeproj" \
     -target "${project_name}" \
     -sdk iphoneos \
     SYMROOT=$(PWD)/builtFramework \
@@ -69,22 +72,9 @@ exitOnFailureCode $?
 FRAMEWORK_DIR=$FRAMEWORK_BUILD_PATH/$FRAMEWORK_NAME.framework
 
 # clean up old framework directory if exists
-rm -rf $FRAMEWORK_DIR
-
-# Build the canonical Framework bundle directory
-# structure
-echo "Framework: Setting up directories..."
 mkdir -p $FRAMEWORK_DIR
-mkdir -p $FRAMEWORK_DIR/Versions
-mkdir -p $FRAMEWORK_DIR/Versions/$FRAMEWORK_VERSION
-mkdir -p $FRAMEWORK_DIR/Versions/$FRAMEWORK_VERSION/Resources
-mkdir -p $FRAMEWORK_DIR/Versions/$FRAMEWORK_VERSION/Headers
-
-echo "Framework: Creating symlinks..."
-ln -s $FRAMEWORK_VERSION $FRAMEWORK_DIR/Versions/Current
-ln -s Versions/Current/Headers $FRAMEWORK_DIR/Headers
-ln -s Versions/Current/Resources $FRAMEWORK_DIR/Resources
-ln -s Versions/Current/$FRAMEWORK_NAME $FRAMEWORK_DIR/$FRAMEWORK_NAME
+rm -rf $FRAMEWORK_DIR
+cp -aR "builtFramework/Release-iphoneos/${project_name}.framework" "$FRAMEWORK_DIR"
 
 # The trick for creating a fully usable library is
 # to use lipo to glue the different library
@@ -96,21 +86,8 @@ ln -s Versions/Current/$FRAMEWORK_NAME $FRAMEWORK_DIR/$FRAMEWORK_NAME
 # framework with no .a extension.
 echo "Framework: Creating library..."
 lipo -create \
-    "builtFramework/Debug-iphonesimulator/lib${project_name}.a" \
-    "builtFramework/Release-iphoneos/lib${project_name}.a" \
-    -o "$FRAMEWORK_DIR/Versions/Current/$FRAMEWORK_NAME"
+    "builtFramework/Debug-iphonesimulator/${project_name}.framework/${project_name}" \
+    "builtFramework/Release-iphoneos/${project_name}.framework/${project_name}" \
+    -o "$FRAMEWORK_DIR/${project_name}"
 
-exitOnFailureCode $?
-
-# Now copy the final assets over: your library
-# header files and service definition json files
-echo "Framework: Copying public headers into current version..."
-#those headers are declared in xcode's building phase: Headers
-cp -a builtFramework/Release-iphoneos/include/${project_name}/*.h $FRAMEWORK_DIR/Headers/
-exitOnFailureCode $?
-
-# copy service definition json files
-echo "Copying service definition files into current build directory..."
-mkdir -p 'builtFramework/service-definitions'
-find . -name "*.json" -not -path "./*Tests/*" -not -path './builtFramework/*' -exec cp {} 'builtFramework/service-definitions/' \;
 exitOnFailureCode $?

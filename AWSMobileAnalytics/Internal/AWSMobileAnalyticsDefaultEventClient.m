@@ -1,21 +1,21 @@
-/*
- Copyright 2010-2015 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-
- Licensed under the Apache License, Version 2.0 (the "License").
- You may not use this file except in compliance with the License.
- A copy of the License is located at
-
- http://aws.amazon.com/apache2.0
-
- or in the "license" file accompanying this file. This file is distributed
- on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
- express or implied. See the License for the specific language governing
- permissions and limitations under the License.
- */
+//
+// Copyright 2010-2017 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+//
+// Licensed under the Apache License, Version 2.0 (the "License").
+// You may not use this file except in compliance with the License.
+// A copy of the License is located at
+//
+// http://aws.amazon.com/apache2.0
+//
+// or in the "license" file accompanying this file. This file is distributed
+// on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either
+// express or implied. See the License for the specific language governing
+// permissions and limitations under the License.
+//
 
 #import "AWSMobileAnalyticsDefaultEventClient.h"
 #import "AWSMobileAnalyticsDefaultEvent.h"
-#import "AWSLogging.h"
+#import "AWSCocoaLumberjack.h"
 
 static NSString* const AWSMobileAnalyticsEventSchemaVersion = @"v2.0";
 static NSString* const AWSMobileAnalyticsEnabled = @"isAnalyticsEnabled";
@@ -55,8 +55,7 @@ static NSString* const AWSMobileAnalyticsEnabled = @"isAnalyticsEnabled";
         _eventObservers       = [NSMutableArray new];
         _allowEventCollection = eventCollection;
 
-        NSString* verKey = [_context.configuration stringForKey:@"versionKey" withOptValue:@"ver"];
-        [_reservedAttributes setValue:AWSMobileAnalyticsEventSchemaVersion forKey:verKey];
+        [_reservedAttributes setValue:AWSMobileAnalyticsEventSchemaVersion forKey:@"ver"];
 
         [self addEventObserver:self.deliveryClient];
     }
@@ -78,7 +77,7 @@ static NSString* const AWSMobileAnalyticsEnabled = @"isAnalyticsEnabled";
 
 -(void) submitEvents
 {
-    AWSLogVerbose( @"Notifying delivery client of submission request.");
+    AWSDDLogVerbose( @"Notifying delivery client of submission request.");
     [self.deliveryClient attemptDelivery];
 }
 
@@ -94,7 +93,7 @@ static NSString* const AWSMobileAnalyticsEnabled = @"isAnalyticsEnabled";
 {
     if (theEventType == nil)
     {
-        AWSLogWarn( @"Nil event type provided to createInternalEvent");
+        AWSDDLogWarn( @"Nil event type provided to createInternalEvent");
         return nil;
     }
     return [AWSMobileAnalyticsDefaultEvent defaultEventWithInsightsContext:self.context withEventTimestamp:theTimestamp withEventType:theEventType];
@@ -106,7 +105,7 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
     //- Argument Checks ---------------------------------------------=
     if (theEvent == nil)
     {
-        AWSLogInfo( @"Nil event provided to recordEvent");
+        AWSDDLogInfo( @"Nil event provided to recordEvent");
         return;
     }
 
@@ -174,11 +173,8 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 
 -(void) notifyObserversForInternalEvent:(id<AWSMobileAnalyticsInternalEvent>) theEvent
 {
-    AWSLogVerbose( @"Notifying AWSMobileAnalyticsEventObservers");
-    if([[AWSLogger defaultLogger] logLevel] >=  AWSLogLevelVerbose)
-    {
-        AWSLogVerbose( @"%@", theEvent);
-    }
+    AWSDDLogVerbose( @"Notifying AWSMobileAnalyticsEventObservers");
+    AWSDDLogVerbose( @"%@", theEvent);
 
     for (id<AWSMobileAnalyticsEventObserver> observer in self.eventObservers)
     {
@@ -191,12 +187,12 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theValue == nil)
     {
-        AWSLogVerbose( @"Nil value provided to addGlobalAttribute");
+        AWSDDLogVerbose( @"Nil value provided to addGlobalAttribute");
         return;
     }
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key provided to addGlobalAttribute");
+        AWSDDLogVerbose( @"Nil key provided to addGlobalAttribute");
         return;
     }
 
@@ -212,17 +208,17 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theEventType == nil)
     {
-        AWSLogVerbose( @"Nil event type passed into addGlobalAttribute");
+        AWSDDLogVerbose( @"Nil event type passed into addGlobalAttribute");
         return;
     }
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key passed into addGlobalAttribute");
+        AWSDDLogVerbose( @"Nil key passed into addGlobalAttribute");
         return;
     }
     if (theValue == nil)
     {
-        AWSLogVerbose( @"Nil value passed into addGlobalAttribute");
+        AWSDDLogVerbose( @"Nil value passed into addGlobalAttribute");
         return;
     }
 
@@ -241,12 +237,12 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theValue == nil)
     {
-        AWSLogVerbose( @"Nil value provided to addGlobalMetric");
+        AWSDDLogVerbose( @"Nil value provided to addGlobalMetric");
         return;
     }
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key provided to addGlobalMetric");
+        AWSDDLogVerbose( @"Nil key provided to addGlobalMetric");
         return;
     }
 
@@ -262,17 +258,17 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theEventType == nil)
     {
-        AWSLogVerbose( @"Nil event type passed into addGlobalMetric");
+        AWSDDLogVerbose( @"Nil event type passed into addGlobalMetric");
         return;
     }
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key passed into addGlobalMetric");
+        AWSDDLogVerbose( @"Nil key passed into addGlobalMetric");
         return;
     }
     if (theValue == nil)
     {
-        AWSLogVerbose( @"Nil value passed into addGlobalMetric");
+        AWSDDLogVerbose( @"Nil value passed into addGlobalMetric");
         return;
     }
 
@@ -291,7 +287,7 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theObserver == nil)
     {
-        AWSLogVerbose( @"Nil observer passed to addEventObserver");
+        AWSDDLogVerbose( @"Nil observer passed to addEventObserver");
         return;
     }
 
@@ -305,7 +301,7 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theObserver == nil)
     {
-        AWSLogVerbose( @"Nil observer passed to removeEventObserver");
+        AWSDDLogVerbose( @"Nil observer passed to removeEventObserver");
         return;
     }
 
@@ -316,7 +312,7 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key provided to removeGlobalAttributeForKey");
+        AWSDDLogVerbose( @"Nil key provided to removeGlobalAttributeForKey");
         return;
     }
 
@@ -331,12 +327,12 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theEventType == nil)
     {
-        AWSLogVerbose( @"Nil event type passed into removeGlobalAttributeForKey");
+        AWSDDLogVerbose( @"Nil event type passed into removeGlobalAttributeForKey");
         return;
     }
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key passed into removeGlobalAttribute");
+        AWSDDLogVerbose( @"Nil key passed into removeGlobalAttribute");
         return;
     }
 
@@ -353,7 +349,7 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key provided to removeGlobalMetric");
+        AWSDDLogVerbose( @"Nil key provided to removeGlobalMetric");
         return;
     }
 
@@ -369,12 +365,12 @@ andApplyGlobalAttributes:(BOOL) applyGlobalAttributes
 {
     if (theEventType == nil)
     {
-        AWSLogVerbose( @"Nil event type passed into removeGlobalMetric");
+        AWSDDLogVerbose( @"Nil event type passed into removeGlobalMetric");
         return;
     }
     if (theKey == nil)
     {
-        AWSLogVerbose( @"Nil key passed into removeGlobalMetric");
+        AWSDDLogVerbose( @"Nil key passed into removeGlobalMetric");
         return;
     }
 
